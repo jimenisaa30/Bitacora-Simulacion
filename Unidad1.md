@@ -248,7 +248,7 @@ function drawSparkles() {
     let tw = (sin(frameCount * 0.05 + s.phase) + 1) / 2;
     let alpha = 60 + tw * 100 + hoverAmt * 120;
     let sz = 3 + hoverAmt * 4 + tw * 1.5;
-    fill(30, 230, 140, min(alpha, 255));
+    fill(90, 255, 210, min(alpha, 255));
     circle(s.x - sz * 0.7, s.y, sz);
     circle(s.x + sz * 0.5, s.y + sz * 0.4, sz * 0.9);
   }
