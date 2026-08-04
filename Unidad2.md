@@ -44,7 +44,6 @@ function resetParticles() {
 
 ## 3. Matriz de atracción, repulsión e indiferencia
 
-![Matriz de atracción y repulsión entre tipos]
 
 ```js
 function buildMatrix() {
