@@ -1,9 +1,3 @@
-// ---------------------------------------------------------
-// PARTICLE LIFE: abeja (amarillo) repelida por todas las flores,
-// flores que se agrupan por su propio color.
-// Sketch puro de p5.js (pégalo en el editor online de p5.js
-// o en un sketch.js junto a un index.html estándar).
-// ---------------------------------------------------------
 
 const BEE = 0; // índice del tipo "abeja"
 const NUM_TYPES = 5; // 1 abeja + 4 colores de flores
