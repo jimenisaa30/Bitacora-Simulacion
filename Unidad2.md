@@ -12,6 +12,9 @@ const TYPE_COLORS = ['#f4d35e', '#e63946', '#52b788', '#4361ee', '#9d4edd'];
 let particles = [];
 let matrix = [];
 
+const MAX_SPEED = 6;   // límite de velocidad para evitar explosiones numéricas
+const MIN_DIST = 2;    // distancia mínima usada al calcular fuerzas, evita división inestable
+
 // controles UI (creados con funciones propias de p5, sin HTML externo)
 let uiBee, uiFlower, uiRMax, uiForce, uiRep, uiAttr, uiFric, uiChase, resetBtn;
 let labelDiv;
@@ -140,8 +143,10 @@ function draw() {
       if (dy > height / 2) dy -= height;
       if (dy < -height / 2) dy += height;
 
-      const d = Math.sqrt(dx * dx + dy * dy);
-      if (d > 0 && d < rMax) {
+      const dSq = dx * dx + dy * dy;
+      const minDSq = MIN_DIST * MIN_DIST;
+      if (dSq > 0 && dSq < rMax * rMax) {
+        const d = Math.sqrt(Math.max(dSq, minDSq)); // evita división inestable si están casi encimadas
         const r = d / rMax;
         const a = matrix[p.type][q.type];
         const f = forceFn(r, a);
@@ -158,6 +163,14 @@ function draw() {
     const p = particles[i];
     p.vx = (p.vx + p.ax) * friction;
     p.vy = (p.vy + p.ay) * friction;
+
+    // límite de velocidad máxima: evita que la simulación explote o llegue a NaN
+    const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+    if (speed > MAX_SPEED) {
+      p.vx = (p.vx / speed) * MAX_SPEED;
+      p.vy = (p.vy / speed) * MAX_SPEED;
+    }
+
     p.x += p.vx;
     p.y += p.vy;
     if (p.x < 0) p.x += width;
