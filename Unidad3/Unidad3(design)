@@ -1,1 +1,212 @@
+# Bitácora · Unidad 3: Fuerzas
+
+## Instrumento: Geometrías en fuerza
+
+- **Instrumento publicado:** [https://jimenisaa30.github.io/test-Unidad-3/](https://jimenisaa30.github.io/test-Unidad-3/)
+- **Repositorio:** [test-Unidad-3](https://github.com/jimenisaa30/test-Unidad-3)
+- **Idea narrativa:** un instrumento visual de geometrías cinéticas. Miles de partículas forman espirales, estrellas y corazones; las fuerzas físicas deforman esas composiciones y permiten interpretarlas en vivo.
+
+> **Cómo añadir evidencias:** guarda cada imagen en `evidencias/` y reemplaza las rutas de ejemplo. También puedes añadir una breve descripción debajo de cada imagen.
+
+---
+
+## 1. Instrumento funcional y publicado
+
+El instrumento está desplegado en GitHub Pages y ofrece dos modos:
+
+- **LAB:** muestra el panel de parámetros, las pruebas aisladas y el marcador del atractor.
+- **PERFORMANCE:** oculta la interfaz y el cursor; el mouse sigue controlando el centro del vórtice para mantener una presentación limpia.
+
+### Controles performativos
+
+| Control | Acción |
+| --- | --- |
+| Mouse | Mueve el centro del atractor y del vórtice. |
+| `Q` | Activa o desactiva gravedad. |
+| `W` | Activa repulsión radial. |
+| `E` | Activa atracción radial. |
+| `R` | Activa o desactiva vórtice. |
+| `T` | Activa o desactiva resistencia del aire. |
+| `1` | Cambia el radio de influencia. |
+| `2` | Cambia el tamaño de las partículas. |
+| `3` | Cambia el amortiguamiento del aire. |
+| `4` | Cambia la velocidad máxima. |
+| `5` | Cambia la potencia global de las fuerzas. |
+| `6` | Alterna entre espiral, estrella y corazón. |
+| `C` | Genera una nueva paleta cromática aleatoria. |
+| `Espacio` | Dispara un pulso de fuerza temporal. |
+| `P` | Alterna entre LAB y PERFORMANCE. |
+| `Enter` | Reinicia la forma actual. |
+
+### Evidencias de funcionamiento
+
+<!-- Sustituye las rutas por tus capturas reales. -->
+
+![Modo LAB: panel y forma inicial](./evidencias/lab-inicial.png)
+
+*Descripción de la evidencia: [escribe aquí qué se observa].*
+
+![Modo PERFORMANCE: interfaz y cursor ocultos](./evidencias/performance.png)
+
+*Descripción de la evidencia: [escribe aquí qué se observa].*
+
+---
+
+## 2. Mapa del sistema
+
+El proyecto conserva el flujo de simulación:
+
+```text
+estado de partículas → fuerzas → aceleración → velocidad → posición → render
+```
+
+| Elemento | Dónde está | Función |
+| --- | --- | --- |
+| Estado | `src/simulation/createSimulation.js` · `positionBuffer`, `velocityBuffer` | Guarda posición y velocidad de cada partícula en GPU. |
+| Formas iniciales | `src/simulation/createSimulation.js` · inicializadores de espiral, estrella y corazón | Distribuye las partículas en la geometría seleccionada. |
+| Fuerzas | `src/simulation/createSimulation.js` · bloque `force` | Suma gravedad, fuerza radial, vórtice, resistencia al aire y pulso. |
+| Integración | `src/simulation/createSimulation.js` · actualización de `v` y `p` | Actualiza velocidad y posición mediante Euler semiimplícito. |
+| Render | `src/simulation/createSimulation.js` · `SpriteNodeMaterial` e `InstancedMesh` | Dibuja cada partícula como un sprite circular de color. |
+| Parámetros | `src/simulation/parameters.js` | Define los uniforms que JavaScript cambia en tiempo real. |
+| Controles | `src/main.js` | Relaciona teclado, mouse, LAB y PERFORMANCE con los parámetros. |
+| Interfaz | `src/ui/labPanel.js` y `src/styles.css` | Muestra controles, pruebas y estilo visual. |
+
+---
+
+## 3. Ficha de fuerzas
+
+### Gravedad
+
+- **Descripción:** fuerza constante dirigida hacia abajo.
+- **Modelo:** `F = (0, -g, 0)`.
+- **Control:** `Q`.
+- **Predicción:** con gravedad activa, la composición cae y se curva hacia la parte inferior de la escena.
+- **Decisión de diseño:** su magnitud se limita para que la forma siga siendo reconocible durante la interpretación.
+
+### Atracción radial
+
+- **Descripción:** fuerza dirigida desde cada partícula hacia el atractor controlado por el mouse.
+- **Modelo:** `F = k · dirección / distancia²`.
+- **Control:** `E`.
+- **Predicción:** las partículas convergen alrededor del cursor; con el vórtice activado, forman órbitas.
+- **Decisión de diseño:** se usa una distancia mínima (*softening*) para evitar fuerzas infinitas cerca del centro.
+
+### Repulsión radial
+
+- **Descripción:** misma dirección radial, pero con signo inverso.
+- **Modelo:** `F = -k · dirección / distancia²`.
+- **Control:** `W`.
+- **Predicción:** las partículas se separan del cursor y expanden la composición.
+- **Decisión de diseño:** invertir el signo permite comparar directamente atracción y repulsión con el mismo modelo.
+
+### Vórtice
+
+- **Descripción:** fuerza tangencial perpendicular a la dirección radial alrededor del atractor.
+- **Modelo:** `F = k · (eje Z × dirección radial)`.
+- **Control:** `R`; su centro se mueve con el mouse.
+- **Predicción:** las partículas giran alrededor del cursor, especialmente cuando se combina con atracción.
+- **Decisión de diseño:** se combina con amortiguamiento para evitar que la velocidad crezca sin límite.
+
+### Resistencia del aire
+
+- **Descripción:** el aire se modela como un fluido que se opone al movimiento.
+- **Modelo:** `F = -c · v`.
+- **Control:** `T`; el coeficiente se ajusta con `3` o el panel.
+- **Predicción:** al aumentar el amortiguamiento, el movimiento pierde energía y se estabiliza.
+
+### Pulso performativo
+
+- **Descripción:** amplificación temporal de las fuerzas activas.
+- **Control:** `Espacio`; también responde al movimiento del mouse.
+- **Predicción:** las fuerzas activas se vuelven momentáneamente más visibles y la composición responde con mayor energía.
+
+---
+
+## 4. Registro de pruebas
+
+Para cada prueba, registra primero la predicción y luego compara con la observación. Añade una captura o un video corto como evidencia.
+
+| Prueba | Configuración | Predicción | Observación | Evidencia |
+| --- | --- | --- | --- | --- |
+| 1. Inercia | Todas las fuerzas desactivadas. | Las partículas conservan aproximadamente su movimiento inicial. | [Completar] | `./evidencias/prueba-1-inercia.png` |
+| 2. Gravedad | `Q` activa. | La forma cae hacia abajo. | [Completar] | `./evidencias/prueba-2-gravedad.png` |
+| 3. Atracción | `E` activa; mover el mouse. | Las partículas se acercan al centro controlado por el cursor. | [Completar] | `./evidencias/prueba-3-atraccion.png` |
+| 4. Repulsión | `W` activa; mover el mouse. | Las partículas se alejan del centro y la forma se expande. | [Completar] | `./evidencias/prueba-4-repulsion.png` |
+| 5. Vórtice | `R` activa; mover el mouse. | Las partículas giran alrededor del cursor. | [Completar] | `./evidencias/prueba-5-vortice.png` |
+| 6. Prueba propia | Combinación: [completar]. | [Completar] | [Completar] | `./evidencias/prueba-6-propia.png` |
+
+### Evidencias visuales de pruebas
+
+![Prueba propia o combinación central](./evidencias/prueba-6-propia.png)
+
+*Descripción de la evidencia: [explica los parámetros usados, lo que esperabas y lo que ocurrió].*
+
+---
+
+## 5. Score visual
+
+### Intención
+
+La obra busca que las fuerzas físicas sean legibles como coreografía: una geometría reconocible se comprime, gira, cae o se expande según las acciones del intérprete. La paleta neón y el fondo oscuro toman como referencia gráficos de alto contraste, color intenso y mandalas psicodélicos.
+
+### Recorrido performativo propuesto
+
+1. Iniciar con una **espiral** sin fuerzas para presentar la geometría.
+2. Cambiar la paleta con `C` y activar **vórtice** con `R`.
+3. Mover el mouse para desplazar el centro del giro.
+4. Usar `Espacio` para acentuar el movimiento con un pulso.
+5. Alternar con `6` a una **estrella** y combinar atracción o repulsión.
+6. Entrar a PERFORMANCE con `P` para ocultar interfaz y cursor.
+7. Cerrar con un **corazón**, amortiguamiento alto y una paleta final.
+
+### Capturas del score
+
+![Momento 1: forma inicial](./evidencias/score-01-inicio.png)
+
+![Momento 2: vórtice y pulso](./evidencias/score-02-vortice.png)
+
+![Momento 3: cierre en PERFORMANCE](./evidencias/score-03-cierre.png)
+
+---
+
+## 6. Bitácora de IA
+
+| Prompt o decisión | Cambio aceptado | Prueba realizada | Resultado o corrección |
+| --- | --- | --- | --- |
+| Definir el instrumento como geometrías cinéticas en lugar de criaturas. | Formas de espiral, estrella y corazón. | Reiniciar cada forma y comprobar su legibilidad. | [Completar] |
+| Modelar gravedad, atracción, repulsión, vórtice y aire. | Fuerzas como uniforms en el compute shader. | Activar una fuerza a la vez y comparar con la predicción. | [Completar] |
+| Diseñar controles performativos con teclado. | Mapeo `QWERT`, `1–6`, `C`, `P` y espacio. | Probar cada control en LAB y PERFORMANCE. | [Completar] |
+| Añadir pulso y centro de vórtice controlado por mouse. | Pulso temporal y atractor móvil. | Mover el mouse mientras el vórtice está activo. | [Completar] |
+
+### Decisiones rechazadas o corregidas
+
+- **Propuesta o cambio descartado:** [Completar].
+- **Motivo del rechazo:** [Completar].
+- **Qué se hizo en su lugar:** [Completar].
+
+---
+
+## 7. Autoevaluación ponderada
+
+> Esta sección queda reservada para completar con la autoevaluación, porcentajes, cálculos y enlaces a evidencias.
+
+| Criterio | Ponderación | Autoevaluación | Evidencia |
+| --- | ---: | ---: | --- |
+| Instrumento funcional y publicado | [Completar] | [Completar] | [Completar] |
+| Mapa del sistema y comprensión técnica | [Completar] | [Completar] | [Completar] |
+| Fichas de fuerzas y decisiones de diseño | [Completar] | [Completar] | [Completar] |
+| Registro de pruebas y predicciones | [Completar] | [Completar] | [Completar] |
+| Score visual y controles performativos | [Completar] | [Completar] | [Completar] |
+| Bitácora de IA | [Completar] | [Completar] | [Completar] |
+| **Total** | **100 %** | **[Completar]** | |
+
+### Reflexión final
+
+**¿Qué aprendí sobre fuerzas e interacción en sistemas de partículas?**
+
+[Completar]
+
+**¿Qué decisión de diseño funcionó mejor y cuál cambiaría en una próxima versión?**
+
+[Completar]
 
