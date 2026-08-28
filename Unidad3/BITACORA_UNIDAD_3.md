@@ -134,6 +134,8 @@ La siguiente autoevaluación propone una valoración alta: el instrumento funcio
 | Bitácora de IA y proceso iterativo | 15 % | 14 / 15 | Se explican decisiones, correcciones de render y resultados de pruebas. |
 | **Total** | **100 %** | **92 / 100** | **Desempeño alto; la principal mejora futura es registrar la performance completa en video.** |
 
+Nota final: 4.6
+
 ## Reflexión final
 
 La unidad permitió comprender que las fuerzas son herramientas de composición y no solo ecuaciones. Atracción, repulsión y vórtice modifican la identidad de una misma figura, mientras la resistencia del aire controla su energía. La decisión más efectiva fue convertir cada forma en una distribución de partículas, de modo que participa realmente en el sistema físico. En una versión futura se añadirá un registro audiovisual continuo y controles de audio para relacionar el pulso con la música.
