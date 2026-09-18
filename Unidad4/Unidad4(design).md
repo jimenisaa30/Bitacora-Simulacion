@@ -176,25 +176,38 @@ orden y de la agrupación espacial-visual asociada a un `K` alto, antes del redi
 
 Según los criterios de la Actividad 03 (presentación grupal):
 
-- [ ] **1. Leí y verifiqué que mi proyecto cumple con los requisitos mínimos de la unidad.** (25 pts)
+- [x] **1. Leí y verifiqué que mi proyecto cumple con los requisitos mínimos de la unidad.** — **25/25**
   _Ver la tabla de la sección 3: los 8 requisitos mínimos están mapeados a una implementación
   concreta._
 
-- [ ] **2. Puedo explicar claramente qué representa cada variable del modelo de Kuramoto en mi
-  proyecto.** (25 pts)
+- [x] **2. Puedo explicar claramente qué representa cada variable del modelo de Kuramoto en mi
+  proyecto.** — **25/25**
   _Ver la tabla de la sección 2 (`θᵢ`, `ωᵢ`, `K`, `N`, `r`)._
 
-- [ ] **3. Puedo explicar claramente cómo las variables del modelo producen el comportamiento
-  observado en mi proyecto.** (25 pts)
+- [x] **3. Puedo explicar claramente cómo las variables del modelo producen el comportamiento
+  observado en mi proyecto.** — **25/25**
   _Ver el párrafo "Cómo producen el comportamiento observado" en la sección 2, y la respuesta a la
   pregunta central de diseño en la sección 5._
 
-- [ ] **4. Puedo demostrar que mi proyecto cumple con los objetivos establecidos en la unidad.** (25 pts)
+- [x] **4. Puedo demostrar que mi proyecto cumple con los objetivos establecidos en la unidad.** — **25/25**
   _Demostrable en vivo: subir `K` para sincronizar, perturbar individual y globalmente, y observar la
   reorganización del colectivo — ver sección 5._
 
-> Marcar cada casilla y ajustar la justificación antes de la presentación, según el estado real del
-> proyecto en ese momento.
+### Nota total de la autoevaluación
+
+| Ítem | Puntos |
+|---|---|
+| 1. Cumplimiento de requisitos mínimos | 25 |
+| 2. Explicación de variables del modelo | 25 |
+| 3. Explicación de cómo producen el comportamiento | 25 |
+| 4. Demostración de cumplimiento de objetivos | 25 |
+| **Total** | **100 / 100** |
+
+> ⚠️ El ítem 4 asume que la versión de 8 agentes (última reescritura) corre sin errores en el
+> navegador. Antes de la presentación, prueba en vivo el editor de p5.js
+> (https://editor.p5js.org/jimenisaa/full/fAlLHuyUy) para confirmar que no aparece ningún error en
+> consola y que las dos interacciones (global e individual) y la perturbación se sienten tal como se
+> describen aquí; si algo falla, ajusta esta nota antes de entregarla.
 
 ---
 
