@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="es" data-lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fórum UPB · Relevo generacional</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#05070c;
+    --fg:#f1f3f6;
+    --muted:#8892a4;
+    --hairline:rgba(241,243,246,0.14);
+    --accent-1:#3E6FF2;
+    --accent-2:#7FB2FF;
+    --accent-3:#9FB6D9;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; width:100%; height:100%;
+    background:var(--bg); color:var(--fg);
+    font-family:'Inter', system-ui, -apple-system, sans-serif;
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- background photo layer (detrás del cubo) ---------- */
+  #bg-photo-layer{
+    position:fixed; inset:0; z-index:0; overflow:hidden; background:var(--bg);
+  }
+  #bg-photo-layer img{
+    position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+    opacity:0; transform:scale(1.04);
+    filter:saturate(0.95) brightness(0.95);
+    transition:opacity 1.1s ease, filter 1.1s ease;
+  }
+  #bg-photo-layer img.visible{ opacity:0.62; }
+  #bg-photo-layer::after{
+    content:""; position:absolute; inset:0; pointer-events:none;
+    background:radial-gradient(ellipse at center, rgba(5,7,12,0.05) 0%, rgba(5,7,12,0.55) 60%, var(--bg) 100%);
+  }
+  #brand-logo{
+    position:fixed; right:clamp(16px,3vw,40px); bottom:86px; z-index:3;
+    height:clamp(26px,3.6vw,38px); width:auto; opacity:0.9; pointer-events:none;
+    filter:drop-shadow(0 2px 6px rgba(0,0,0,0.35));
+  }
+  #photo-caption{
+    position:fixed; left:clamp(16px,3vw,40px); bottom:86px; z-index:1;
+    font-size:11px; color:var(--muted); letter-spacing:.02em;
+    opacity:0; transition:opacity .6s ease; pointer-events:none;
+  }
+  #photo-caption.visible{ opacity:1; }
+
+  #scene{ position:fixed; inset:0; display:block; width:100%; height:100%; z-index:1; }
+
+  /* ---------- overlay layout ---------- */
+  #ui{
+    position:fixed; inset:0; z-index:2; pointer-events:none;
+    display:flex; flex-direction:column; justify-content:space-between;
+    padding:clamp(16px,3vw,40px);
+  }
+  .row{ display:flex; align-items:center; justify-content:space-between; pointer-events:none; }
+  .row > *{ pointer-events:auto; }
+
+  #progress-track{
+    position:fixed; top:0; left:0; height:2px; width:100%;
+    background:rgba(255,255,255,0.06); z-index:5; pointer-events:none;
+  }
+  #progress-fill{
+    height:100%; width:0%;
+    background:linear-gradient(90deg,var(--accent-1),var(--accent-2));
+    transition:width .5s cubic-bezier(.4,0,.2,1), background .6s ease;
+  }
+
+  #brand{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:13px; letter-spacing:.02em; color:var(--muted);
+    display:flex; flex-direction:column; gap:2px;
+  }
+  #brand strong{ color:var(--fg); font-weight:600; }
+
+  #top-controls{ display:flex; gap:8px; align-items:center; }
+  .icon-btn{
+    width:38px; height:38px; border-radius:50%;
+    border:1px solid var(--hairline); background:rgba(255,255,255,0.03);
+    color:var(--fg); font-size:14px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:border-color .25s ease, background .25s ease, transform .15s ease;
+    font-family:'Space Grotesk',sans-serif;
+  }
+  .icon-btn:hover{ border-color:var(--accent-2); background:rgba(255,255,255,0.07); }
+  .icon-btn:active{ transform:scale(.93); }
+  .icon-btn:focus-visible{ outline:2px solid var(--accent-2); outline-offset:2px; }
+
+  #lang-switch{
+    display:flex; align-items:center; gap:0; border:1px solid var(--hairline);
+    border-radius:20px; overflow:hidden; background:rgba(255,255,255,0.03);
+  }
+  #lang-switch button{
+    border:none; background:transparent; color:var(--muted);
+    font-family:'Space Grotesk',sans-serif; font-size:12px; font-weight:600;
+    padding:8px 14px; cursor:pointer; transition:color .2s ease, background .2s ease;
+  }
+  #lang-switch button.active{ color:var(--bg); background:var(--fg); }
+  #lang-switch button:focus-visible{ outline:2px solid var(--accent-2); }
+
+  #stage{ flex:1; display:flex; align-items:center; pointer-events:none; padding-bottom:2vh; }
+  #text-block{ max-width:min(780px,62vw); pointer-events:none; }
+  #slide-eyebrow{
+    font-size:12px; color:var(--muted); margin:0 0 14px 0;
+    display:flex; align-items:center; gap:10px;
+  }
+  #slide-eyebrow .dot{ width:6px; height:6px; border-radius:50%; background:var(--accent-1); flex-shrink:0; }
+  .cat-pill{
+    font-size:11px; padding:3px 10px; border:1px solid var(--hairline);
+    border-radius:20px; color:var(--fg); background:rgba(255,255,255,0.04);
+  }
+  #slide-title{
+    font-family:'Space Grotesk',sans-serif; font-weight:600;
+    font-size:clamp(28px, 4.2vw, 56px); line-height:1.12; margin:0;
+    letter-spacing:-0.01em;
+  }
+  #slide-sub{
+    margin:18px 0 0 0; font-size:clamp(14px,1.3vw,18px);
+    color:var(--muted); max-width:56ch; line-height:1.5;
+  }
+  .fade{ transition:opacity .5s ease, transform .5s cubic-bezier(.4,0,.2,1); }
+  .fade-out{ opacity:0; transform:translateY(10px); }
+
+  #bottom-bar{ display:flex; align-items:center; justify-content:space-between; gap:20px; }
+  #nav-controls{ display:flex; align-items:center; gap:14px; }
+  #counter{
+    font-family:'Space Grotesk',sans-serif; font-size:13px; color:var(--muted);
+    min-width:64px; text-align:center; font-variant-numeric:tabular-nums;
+  }
+  #counter strong{ color:var(--fg); }
+  #hint{ font-size:12px; color:var(--muted); letter-spacing:.01em; display:flex; gap:14px; flex-wrap:wrap; }
+  #hint kbd{
+    font-family:'Space Grotesk',sans-serif; border:1px solid var(--hairline);
+    border-radius:4px; padding:1px 6px; font-size:11px; color:var(--fg);
+  }
+  @media (max-width:760px){
+    #hint{ display:none; }
+    #text-block{ max-width:80vw; }
+  }
+
+  #help-modal{
+    position:fixed; inset:0; z-index:20; display:flex;
+    align-items:center; justify-content:center;
+    background:rgba(5,7,12,0.78); backdrop-filter:blur(6px);
+    opacity:0; pointer-events:none; transition:opacity .3s ease;
+  }
+  #help-modal.open{ opacity:1; pointer-events:auto; }
+  #help-card{
+    width:min(520px,88vw); border:1px solid var(--hairline);
+    background:#0a0d14; padding:32px; transform:translateY(8px);
+    transition:transform .3s ease;
+  }
+  #help-modal.open #help-card{ transform:translateY(0); }
+  #help-card h2{ font-family:'Space Grotesk',sans-serif; font-size:20px; margin:0 0 6px 0; }
+  #help-card p.desc{ color:var(--muted); font-size:13px; margin:0 0 22px 0; }
+  .help-list{ display:flex; flex-direction:column; gap:12px; }
+  .help-row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding-bottom:12px; border-bottom:1px solid var(--hairline); font-size:14px;
+  }
+  .help-row:last-child{ border-bottom:none; padding-bottom:0; }
+  .help-row kbd{
+    font-family:'Space Grotesk',sans-serif; border:1px solid var(--hairline);
+    border-radius:4px; padding:3px 8px; font-size:12px; color:var(--fg);
+    background:rgba(255,255,255,0.04);
+  }
+  #help-close{
+    margin-top:24px; width:100%; padding:11px; border-radius:2px;
+    border:1px solid var(--hairline); background:transparent; color:var(--fg);
+    font-family:'Space Grotesk',sans-serif; font-size:13px; cursor:pointer;
+  }
+  #help-close:hover{ border-color:var(--accent-2); }
+
+  @media (prefers-reduced-motion: reduce){
+    .fade, #bg-photo-layer img, #progress-fill{ transition:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div id="bg-photo-layer" aria-hidden="true">
+  <img id="bg-photo" alt="">
+</div>
+<div id="photo-caption"></div>
+<img id="brand-logo" src="assets/logo-90-anos.png" alt="Universidad Pontificia Bolivariana · 90 años">
+
+<canvas id="scene" aria-hidden="true"></canvas>
+
+<div id="progress-track"><div id="progress-fill"></div></div>
+
+<div id="ui">
+  <div class="row" id="top-row">
+    <div id="brand">
+      <strong data-i18n="brandTitle">Fórum UPB</strong>
+      <span data-i18n="brandSub">Relevo generacional · Centro de Eventos</span>
+    </div>
+    <div id="top-controls">
+      <div id="lang-switch" role="group" aria-label="Idioma / Idioma">
+        <button id="btn-es" class="active" aria-pressed="true">ES</button>
+        <button id="btn-pt" aria-pressed="false">PT</button>
+      </div>
+      <button class="icon-btn" id="btn-help" title="Ayuda (H)" aria-label="Ayuda">?</button>
+      <button class="icon-btn" id="btn-fullscreen" title="Pantalla completa (F)" aria-label="Pantalla completa">⛶</button>
+    </div>
+  </div>
+
+  <div id="stage">
+    <div id="text-block" class="fade">
+      <p id="slide-eyebrow"><span class="dot" aria-hidden="true"></span><span id="eyebrow-text"></span><span class="cat-pill" id="cat-pill" style="display:none"></span></p>
+      <h1 id="slide-title"></h1>
+      <p id="slide-sub"></p>
+    </div>
+  </div>
+
+  <div class="row" id="bottom-bar">
+    <div id="nav-controls">
+      <button class="icon-btn" id="btn-prev" title="Anterior (←)" aria-label="Diapositiva anterior">‹</button>
+      <span id="counter"><strong id="counter-current">01</strong> / <span id="counter-total">13</span></span>
+      <button class="icon-btn" id="btn-next" title="Siguiente (→ / Espacio)" aria-label="Siguiente diapositiva">›</button>
+      <button class="icon-btn" id="btn-restart" title="Reiniciar (R)" aria-label="Reiniciar presentación">↺</button>
+    </div>
+    <div id="hint" data-i18n="hintBar"></div>
+  </div>
+</div>
+
+<div id="help-modal" role="dialog" aria-modal="true" aria-labelledby="help-title">
+  <div id="help-card">
+    <h2 id="help-title" data-i18n="helpTitle">Controles disponibles</h2>
+    <p class="desc" data-i18n="helpDesc">Así navegas la simulación.</p>
+    <div class="help-list" id="help-list"></div>
+    <button id="help-close" data-i18n="helpClose">Cerrar</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script>
+/* =========================================================================
+   FÓRUM UPB · RELEVO GENERACIONAL — simulación generativa (v2)
+   ---------------------------------------------------------------------
+   GRAMÁTICA VISUAL
+   Un único enjambre de partículas es, en todo momento, TODA la pieza:
+   no hay una "capa" separada para el cubo y otra para los eventos.
+   Por defecto las partículas forman el cubo (la estructura, lo que
+   permanece). Cuando la frase describe un tipo de espacio/evento,
+   el mismo enjambre se reorganiza en una silueta que alude a esa
+   naturaleza (microscopio=científico, grupo de personas=social,
+   libro abierto=académico, líder=político, engranaje=tecnológico).
+   Un wireframe tenue del cubo queda siempre visible de fondo: es la
+   estructura base que nunca desaparece, aunque su "piel" (las
+   partículas) cambie de forma. Cada cambio de diapositiva libera un
+   pulso de repulsión — la idea nueva empuja — que luego se reorganiza
+   en la silueta siguiente: la idea se asienta.
+   ========================================================================= */
+
+const YAXIS = new THREE.Vector3(0,1,0);
+
+/* ---------------------------------------------------------------------- */
+/* GENERADORES DE FORMA — cada uno devuelve `count` puntos THREE.Vector3   */
+/* centrados en el origen, en una escala comparable (~radio 1 a 1.3)      */
+/* ---------------------------------------------------------------------- */
+function buildCubeGrid(half, divisions){
+  const pts=[];
+  const faces=[
+    {n:[ 1,0,0], u:[0,1,0], v:[0,0,1]},
+    {n:[-1,0,0], u:[0,1,0], v:[0,0,1]},
+    {n:[0, 1,0], u:[1,0,0], v:[0,0,1]},
+    {n:[0,-1,0], u:[1,0,0], v:[0,0,1]},
+    {n:[0,0, 1], u:[1,0,0], v:[0,1,0]},
+    {n:[0,0,-1], u:[1,0,0], v:[0,1,0]}
+  ];
+  faces.forEach(f=>{
+    for(let a=0;a<divisions;a++){
+      for(let b=0;b<divisions;b++){
+        const su=(divisions===1)?0:(a/(divisions-1))*2-1;
+        const sv=(divisions===1)?0:(b/(divisions-1))*2-1;
+        const x=f.n[0]*half + f.u[0]*su*half + f.v[0]*sv*half;
+        const y=f.n[1]*half + f.u[1]*su*half + f.v[1]*sv*half;
+        const z=f.n[2]*half + f.u[2]*su*half + f.v[2]*sv*half;
+        pts.push(new THREE.Vector3(x,y,z));
+      }
+    }
+  });
+  return pts;
+}
+function shapeCube(count, half){
+  half = half || 1.0;
+  const divisions = Math.max(2, Math.ceil(Math.sqrt(count/6)));
+  const grid = buildCubeGrid(half, divisions);
+  const pts=[];
+  for(let i=0;i<count;i++){
+    const base = grid[i % grid.length].clone();
+    if(i>=grid.length){
+      base.x += (Math.random()-0.5)*0.05*half;
+      base.y += (Math.random()-0.5)*0.05*half;
+      base.z += (Math.random()-0.5)*0.05*half;
+    }
+    pts.push(base);
+  }
+  return pts;
+}
+function fillBlob(cx,cy,cz,rx,ry,rz,n,arr){
+  for(let k=0;k<n;k++){
+    let x,y,z,d;
+    do{ x=Math.random()*2-1; y=Math.random()*2-1; z=Math.random()*2-1; d=x*x+y*y+z*z; } while(d>1);
+    arr.push(new THREE.Vector3(cx+x*rx, cy+y*ry, cz+z*rz));
+  }
+}
+function bookPoint(x,y,side,angle,pageW){
+  const curve=-0.09*(x/pageW)*(x/pageW);
+  const z=curve+(Math.random()-0.5)*0.018;
+  const rot= side<0? -angle: angle;
+  return new THREE.Vector3(x*side,y,z).applyAxisAngle(YAXIS,rot);
+}
+function shapeBook(count){
+  const pts=[]; const pageW=1.2, pageH=1.5, angle=0.78, rows=11;
+  const spineN=Math.floor(count*0.05);
+  const perPage=Math.floor((count-spineN)/2);
+  [-1,1].forEach(side=>{
+    const outlineN=Math.floor(perPage*0.24);
+    const lineN=perPage-outlineN;
+    for(let k=0;k<outlineN;k++){
+      const edge=k%4; const tt=Math.random(); let x,y;
+      if(edge===0){ x=tt*pageW; y=-pageH/2; }
+      else if(edge===1){ x=pageW; y=-pageH/2+tt*pageH; }
+      else if(edge===2){ x=tt*pageW; y=pageH/2; }
+      else { x=0; y=-pageH/2+tt*pageH; }
+      pts.push(bookPoint(x,y,side,angle,pageW));
+    }
+    for(let k=0;k<lineN;k++){
+      const row=k%rows;
+      const y=-pageH*0.38+(row/(rows-1))*pageH*0.76;
+      const x=pageW*0.12+Math.random()*pageW*0.78;
+      pts.push(bookPoint(x,y,side,angle,pageW));
+    }
+  });
+  for(let k=0;k<spineN;k++) pts.push(new THREE.Vector3((Math.random()-0.5)*0.05,(Math.random()-0.5)*pageH,(Math.random()-0.5)*0.06));
+  return pts;
+}
+function shapeBridge(count){
+  const pts=[];
+  const deckHalfW=1.3, deckY=-0.05, towerX=0.55, towerTopY=0.9, towerW=0.075;
+  const deckN=Math.floor(count*0.28);
+  const towerN=Math.floor(count*0.20);
+  const cableN=count-deckN-towerN;
+  fillBlob(0,deckY,0, deckHalfW,0.045,0.18, deckN, pts);
+  fillBlob(-towerX,(deckY+towerTopY)/2,0, towerW,(towerTopY-deckY)/2,towerW, Math.floor(towerN/2), pts);
+  fillBlob(towerX,(deckY+towerTopY)/2,0, towerW,(towerTopY-deckY)/2,towerW, towerN-Math.floor(towerN/2), pts);
+  const perTower=Math.floor(cableN/2);
+  [-towerX, towerX].forEach((tx,idx)=>{
+    const n= idx===0? perTower : cableN-perTower;
+    for(let k=0;k<n;k++){
+      const t=Math.random();
+      const anchorX=-deckHalfW+Math.random()*deckHalfW*2;
+      const top=new THREE.Vector3(tx, towerTopY, 0);
+      const anchor=new THREE.Vector3(anchorX, deckY, 0);
+      const p=top.clone().lerp(anchor,t);
+      p.x+=(Math.random()-0.5)*0.02; p.z+=(Math.random()-0.5)*0.05;
+      pts.push(p);
+    }
+  });
+  return pts;
+}
+function fibonacciSpherePoint(i,n){
+  const offset=2/n, increment=Math.PI*(3-Math.sqrt(5));
+  const y=((i*offset)-1)+(offset/2);
+  const r=Math.sqrt(Math.max(0,1-y*y));
+  const phi=i*increment;
+  return new THREE.Vector3(Math.cos(phi)*r, y, Math.sin(phi)*r);
+}
+function shapeGlobe(count){
+  const pts=[];
+  for(let i=0;i<count;i++) pts.push(fibonacciSpherePoint(i,count).multiplyScalar(1.15));
+  return pts;
+}
+function shapeGear(count){
+  const pts=[]; const outerR=1.05, innerHole=0.16, teeth=10, toothDepth=0.16, thickness=0.12;
+  for(let i=0;i<count;i++){
+    const theta=Math.random()*Math.PI*2;
+    const toothPhase=(theta/(Math.PI*2))*teeth*2;
+    const isTooth=Math.floor(toothPhase)%2===0;
+    const localOuter=isTooth?outerR:outerR-toothDepth;
+    const r=innerHole+Math.random()*(localOuter-innerHole);
+    const x=Math.cos(theta)*r, y=Math.sin(theta)*r, z=(Math.random()-0.5)*thickness;
+    pts.push(new THREE.Vector3(x,y,z));
+  }
+  return pts;
+}
+function shapeGroup(count){
+  const pts=[]; const numFigures=5, huddleR=0.62;
+  const per=Math.floor(count/numFigures);
+  for(let f=0; f<numFigures; f++){
+    const ang=(f/numFigures)*Math.PI*2;
+    const cx=Math.cos(ang)*huddleR, cz=Math.sin(ang)*huddleR;
+    const n=(f===numFigures-1)? (count-per*(numFigures-1)) : per;
+    const headN=Math.floor(n*0.28), bodyN=n-headN;
+    fillBlob(cx,0.42,cz,0.12,0.13,0.12,headN,pts);
+    fillBlob(cx,0.05,cz,0.16,0.32,0.14,bodyN,pts);
+  }
+  return pts;
+}
+function shapeLeader(count){
+  const pts=[];
+  const headN=Math.floor(count*0.10);
+  const torsoN=Math.floor(count*0.34);
+  const legsN=Math.floor(count*0.24);
+  const armUpN=Math.floor(count*0.14);
+  const armSideN=Math.floor(count*0.10);
+  const baseN=count-headN-torsoN-legsN-armUpN-armSideN;
+  fillBlob(0,1.05,0, 0.16,0.17,0.15, headN, pts);
+  fillBlob(0,0.55,0, 0.26,0.42,0.18, torsoN, pts);
+  fillBlob(-0.13,-0.55,0, 0.11,0.42,0.11, Math.floor(legsN/2), pts);
+  fillBlob(0.13,-0.55,0, 0.11,0.42,0.11, legsN-Math.floor(legsN/2), pts);
+  for(let k=0;k<armUpN;k++){
+    const t=Math.random();
+    const shoulder=new THREE.Vector3(0.24,0.78,0), hand=new THREE.Vector3(0.78,1.35,0.05);
+    const p=shoulder.clone().lerp(hand,t);
+    p.x+=(Math.random()-0.5)*0.08; p.y+=(Math.random()-0.5)*0.08; p.z+=(Math.random()-0.5)*0.08;
+    pts.push(p);
+  }
+  for(let k=0;k<armSideN;k++){
+    const t=Math.random();
+    const shoulder=new THREE.Vector3(-0.24,0.78,0), hand=new THREE.Vector3(-0.32,0.2,0);
+    const p=shoulder.clone().lerp(hand,t);
+    p.x+=(Math.random()-0.5)*0.06; p.z+=(Math.random()-0.5)*0.06;
+    pts.push(p);
+  }
+  fillBlob(0,-0.92,0, 0.42,0.06,0.3, baseN, pts);
+  return pts;
+}
+function shapeMicroscope(count){
+  const pts=[];
+  const baseN=Math.floor(count*0.18);
+  const armN=Math.floor(count*0.34);
+  const stageN=Math.floor(count*0.18);
+  const tubeN=Math.floor(count*0.16);
+  const lensN=count-baseN-armN-stageN-tubeN;
+  fillBlob(0,-1.05,0, 0.5,0.09,0.32, baseN, pts);
+  for(let k=0;k<armN;k++){
+    const t=Math.random(); const y=-0.95+t*1.9; const x=0.12*Math.sin(t*Math.PI*0.55)+0.05;
+    const p=new THREE.Vector3(x,y,0);
+    p.x+=(Math.random()-0.5)*0.09; p.z+=(Math.random()-0.5)*0.12;
+    pts.push(p);
+  }
+  fillBlob(0.05,0.05,0, 0.45,0.07,0.22, stageN, pts);
+  fillBlob(0.15,0.92,0.02, 0.09,0.28,0.09, tubeN, pts);
+  fillBlob(0.02,-0.28,0, 0.07,0.22,0.07, lensN, pts);
+  return pts;
+}
+const SHAPE_FN = { cube:shapeCube, book:shapeBook, gear:shapeGear, bridge:shapeBridge, globe:shapeGlobe, group:shapeGroup, leader:shapeLeader, microscope:shapeMicroscope };
+const shapeCache = {};
+function getShapeTarget(name, count){
+  const key = name+"_"+count;
+  if(!shapeCache[key]) shapeCache[key] = (SHAPE_FN[name]||shapeCube)(count);
+  return shapeCache[key];
+}
+
+/* ---------------------------------------------------------------------- */
+/* PALETAS POR CATEGORÍA                                                   */
+/* ---------------------------------------------------------------------- */
+const PAL = {
+  neutral:["#3E6FF2","#7FB2FF","#9FB6D9"],
+  academico:["#274B8C","#9FB6D9","#5C8AD6"],
+  cientifico:["#33C7B0","#7EE8D3","#1FA893"],
+  social:["#F2637B","#F7A8B8","#E0455F"],
+  politico:["#E4B75B","#F2D08A","#C99A3D"],
+  tecnologico:["#F2924A","#F7B27A","#D9752E"]
+};
+const CAT_LABEL = {
+  academico:{es:"Académico", pt:"Acadêmico"},
+  cientifico:{es:"Científico", pt:"Científico"},
+  social:{es:"Social", pt:"Social"},
+  politico:{es:"Político", pt:"Político"},
+  tecnologico:{es:"Tecnológico", pt:"Tecnológico"}
+};
+
+/* ---------------------------------------------------------------------- */
+/* GUION — 13 escenas                                                      */
+/* Cada escena define `parts`: uno o varios {shape,palette,offset,scale}   */
+/* que en conjunto reparten todas las partículas del enjambre.             */
+/* ---------------------------------------------------------------------- */
+const Z = ()=> new THREE.Vector3(0,0,0);
+const SLIDES = [
+  { // 1 — Título
+    es:{ eyebrow:"Fórum UPB", title:"Relevo generacional: la ventaja que nadie está aprovechando", sub:"@centrodeeventosupb" },
+    pt:{ eyebrow:"Fórum UPB", title:"Transição geracional: a vantagem que ninguém está aproveitando", sub:"@centrodeeventosupb" },
+    image:null, category:null, kick:0.35, spinSpeed:0.15,
+    parts:[{ shape:"cube", palette:PAL.neutral, offset:Z(), scale:1.0 }]
+  },
+  { // 2 — Auditorio / grados
+    es:{ eyebrow:"Escena 01", title:"¿Un gran auditorio solo para hacer grados?", sub:"" },
+    pt:{ eyebrow:"Cena 01", title:"Um grande auditório só para formaturas?", sub:"" },
+    image:{ file:"FOTO_1.jpg", tagEs:"Ceremonia de grados en Fórum", tagPt:"Cerimônia de formatura no Fórum" },
+    category:"academico", kick:0.3, spinSpeed:0.05,
+    parts:[{ shape:"book", palette:PAL.academico, offset:Z(), scale:1.0 }]
+  },
+  { // 3 — Transición al mundo
+    es:{ eyebrow:"Escena 02", title:"Los eventos no llegaron a la Universidad.", sub:"La Universidad decidió encontrarse con el mundo." },
+    pt:{ eyebrow:"Cena 02", title:"Os eventos não chegaram à Universidade.", sub:"A Universidade decidiu se encontrar com o mundo." },
+    image:{ file:"IMAGEN3.jpg", tagEs:"El Fórum, donde la Universidad se abre a la ciudad", tagPt:"O Fórum, onde a Universidade se abre à cidade" },
+    category:null, kick:0.75, spinSpeed:0.22,
+    parts:[{ shape:"globe", palette:["#2F5FE0","#4FD1C5","#E8EDF2"], offset:Z(), scale:1.0 }]
+  },
+  { // 4 — Academia + Industria + Ciudad
+    es:{ eyebrow:"Escena 03", title:"Academia + Industria + Ciudad", sub:"" },
+    pt:{ eyebrow:"Cena 03", title:"Academia + Indústria + Cidade", sub:"" },
+    image:{ file:"FOTO_2.jpeg", tagEs:"Academia, industria y ciudad en un mismo escenario", tagPt:"Academia, indústria e cidade em um mesmo palco" },
+    category:null, kick:0.55, spinSpeed:0.04,
+    parts:[
+      { shape:"book",   palette:PAL.academico,   offset:new THREE.Vector3(-2.3,0,0), scale:1.0 },
+      { shape:"bridge", palette:PAL.tecnologico, offset:new THREE.Vector3(0,0,0),     scale:1.0 },
+      { shape:"leader", palette:PAL.politico,    offset:new THREE.Vector3(2.3,0,0),   scale:1.0 }
+    ]
+  },
+  { // 5 — Impacto
+    es:{ eyebrow:"Escena 04", title:"Los eventos nunca fueron el objetivo.", sub:"El impacto sí." },
+    pt:{ eyebrow:"Cena 04", title:"Os eventos nunca foram o objetivo.", sub:"O impacto, sim." },
+    image:{ file:"FOTO_3.jpg", tagEs:"El impacto que dejan los eventos", tagPt:"O impacto que os eventos deixam" },
+    category:null, kick:1.15, spinSpeed:0.3, special:"ripple",
+    parts:[{ shape:"cube", palette:["#F5D67A","#FFFFFF","#F5D67A"], offset:Z(), scale:1.15 }]
+  },
+  { // 6 — Comunidad
+    es:{ eyebrow:"Escena 05", title:"Un evento trae personas.", sub:"Una comunidad trae transformación." },
+    pt:{ eyebrow:"Cena 05", title:"Um evento traz pessoas.", sub:"Uma comunidade traz transformação." },
+    image:{ file:"IMAGEN1.jpg", tagEs:"El auditorio, listo para reunir a la comunidad", tagPt:"O auditório, pronto para reunir a comunidade" },
+    category:"social", kick:0.5, spinSpeed:0.05, special:"links",
+    parts:[{ shape:"group", palette:PAL.social, offset:Z(), scale:1.0 }]
+  },
+  { // 7 — Confianza / talento
+    es:{ eyebrow:"Escena 06", title:"El talento crece a la velocidad de la confianza.", sub:"" },
+    pt:{ eyebrow:"Cena 06", title:"O talento cresce na velocidade da confiança.", sub:"" },
+    image:null, category:"cientifico", kick:0.55, spinSpeed:0.5,
+    growWhileActive:{ from:0.3, to:1.15, duration:9 },
+    parts:[{ shape:"cube", palette:PAL.cientifico, offset:Z(), scale:0.3 }]
+  },
+  { // 8 — Experiencia / rutas
+    es:{ eyebrow:"Escena 07", title:"La experiencia construye el camino.", sub:"Las nuevas generaciones descubren nuevas rutas." },
+    pt:{ eyebrow:"Cena 07", title:"A experiência constrói o caminho.", sub:"As novas gerações descobrem novas rotas." },
+    image:{ file:"FOTO_4.jpg", tagEs:"Rutas entre generaciones", tagPt:"Rotas entre gerações" },
+    category:"cientifico", kick:0.6, spinSpeed:0.05,
+    parts:[{ shape:"microscope", palette:["#E4B75B","#63C7E8","#33C7B0"], offset:Z(), scale:1.0 }]
+  },
+  { // 9 — Dos generaciones
+    es:{ eyebrow:"Escena 08", title:"Una visión.", sub:"Dos generaciones." },
+    pt:{ eyebrow:"Cena 08", title:"Uma visão.", sub:"Duas gerações." },
+    image:null, category:null, kick:0.6, spinSpeed:0.15,
+    parts:[
+      { shape:"cube", palette:["#E4B75B","#F2D08A"], offset:new THREE.Vector3(-1.35,0,0), scale:0.55 },
+      { shape:"cube", palette:["#63C7E8","#9FE0F2"], offset:new THREE.Vector3(1.35,0,0),  scale:0.55 }
+    ]
+  },
+  { // 10 — Trabajan juntas
+    es:{ eyebrow:"Escena 09", title:"El crecimiento no ocurre cuando una generación reemplaza a otra.", sub:"Ocurre cuando trabajan juntas." },
+    pt:{ eyebrow:"Cena 09", title:"O crescimento não acontece quando uma geração substitui a outra.", sub:"Acontece quando trabalham juntas." },
+    image:{ file:"IMAGEN2.jpg", tagEs:"El campus donde conviven las generaciones", tagPt:"O campus onde convivem as gerações" },
+    category:null, kick:0.7, spinSpeed:0.15,
+    parts:[{ shape:"cube", palette:["#B6D67A","#8FD6C9","#E4B75B"], offset:Z(), scale:0.85 }]
+  },
+  { // 11 — Presente
+    es:{ eyebrow:"Escena 10", title:"Los jóvenes no son el futuro.", sub:"Son el presente que muchas organizaciones aún no ven." },
+    pt:{ eyebrow:"Cena 10", title:"Os jovens não são o futuro.", sub:"São o presente que muitas organizações ainda não veem." },
+    image:null, category:null, kick:1.6, spinSpeed:0.6,
+    parts:[{ shape:"cube", palette:["#B23BE0","#7A4CF2","#B23BE0"], offset:Z(), scale:0.5 }]
+  },
+  { // 12 — Futuro se construye
+    es:{ eyebrow:"Escena 11", title:"El futuro no se hereda.", sub:"Se construye." },
+    pt:{ eyebrow:"Cena 11", title:"O futuro não se herda.", sub:"Se constrói." },
+    image:{ file:"FOTO_5.jpeg", tagEs:"El futuro se construye", tagPt:"O futuro se constrói" },
+    category:null, kick:0.7, spinSpeed:0.08,
+    parts:[{ shape:"cube", palette:["#C9D6E4","#FFFFFF","#C9D6E4"], offset:Z(), scale:1.05 }]
+  },
+  { // 13 — Cierre
+    es:{ eyebrow:"Cierre", title:"Memorias del Fórum", sub:"@centrodeeventosupb" },
+    pt:{ eyebrow:"Encerramento", title:"Memórias do Fórum", sub:"@centrodeeventosupb" },
+    image:{ file:"FOTO_6.jpg", tagEs:"Hasta el próximo encuentro", tagPt:"Até o próximo encontro" },
+    category:null, kick:0.3, spinSpeed:0.05,
+    parts:[{ shape:"cube", palette:PAL.neutral, offset:Z(), scale:1.0 }]
+  }
+];
+
+const UI_TEXT = {
+  es:{
+    brandTitle:"Fórum UPB", brandSub:"Relevo generacional · Centro de Eventos",
+    helpTitle:"Controles disponibles", helpDesc:"Así navegas la simulación.", helpClose:"Cerrar",
+    hint:"Espacio / → avanzar · ← volver · F pantalla completa · H ayuda · R reiniciar",
+    controls:[
+      ["Espacio / →","Avanzar a la siguiente escena"],["←","Volver a la escena anterior"],
+      ["F","Alternar pantalla completa"],["H / ?","Mostrar u ocultar esta ayuda"],
+      ["R","Reiniciar la presentación"],["ES / PT","Cambiar el idioma del guion"]
+    ]
+  },
+  pt:{
+    brandTitle:"Fórum UPB", brandSub:"Transição geracional · Centro de Eventos",
+    helpTitle:"Controles disponíveis", helpDesc:"Assim você navega pela simulação.", helpClose:"Fechar",
+    hint:"Espaço / → avançar · ← voltar · F tela cheia · H ajuda · R reiniciar",
+    controls:[
+      ["Espaço / →","Avançar para a próxima cena"],["←","Voltar para a cena anterior"],
+      ["F","Alternar tela cheia"],["H / ?","Mostrar ou ocultar esta ajuda"],
+      ["R","Reiniciar a apresentação"],["ES / PT","Mudar o idioma do roteiro"]
+    ]
+  }
+};
+
+/* ---------------------------------------------------------------------- */
+/* STATE                                                                   */
+/* ---------------------------------------------------------------------- */
+const state = { index:0, lang:"es", helpOpen:false, clock:new THREE.Clock(), lastT:0 };
+
+/* ---------------------------------------------------------------------- */
+/* THREE SETUP                                                             */
+/* ---------------------------------------------------------------------- */
+const canvas = document.getElementById("scene");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+renderer.setClearColor(0x000000, 0);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 100);
+camera.position.set(0,0,8.2);
+
+function resize(){
+  const w=window.innerWidth, h=window.innerHeight;
+  renderer.setSize(w,h);
+  camera.aspect=w/h; camera.updateProjectionMatrix();
+}
+window.addEventListener("resize", resize);
+resize();
+
+/* ----- estructura base: wireframe del cubo, SIEMPRE visible ----- */
+const CUBE_HALF = 1.0;
+const frameGroup = new THREE.Group();
+scene.add(frameGroup);
+const boxGeo = new THREE.BoxGeometry(CUBE_HALF*2, CUBE_HALF*2, CUBE_HALF*2);
+const fillMat = new THREE.MeshBasicMaterial({ color:0x3E6FF2, transparent:true, opacity:0.025, side:THREE.DoubleSide, depthWrite:false });
+frameGroup.add(new THREE.Mesh(boxGeo, fillMat));
+const edgesGeo = new THREE.EdgesGeometry(boxGeo);
+const edgesMat = new THREE.LineBasicMaterial({ color:0x9FB6D9, transparent:true, opacity:0.5, depthWrite:false });
+const edges = new THREE.LineSegments(edgesGeo, edgesMat);
+frameGroup.add(edges);
+const frameState = { angVelExtra:new THREE.Vector3(0,0,0), colorCurrent:new THREE.Color(0x9FB6D9) };
+
+/* ----- enjambre de partículas ----- */
+const N = 820;
+function shuffledIndices(n){
+  const arr=[...Array(n).keys()];
+  for(let i=n-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
+  return arr;
+}
+const phase=[], position=[], velocity=[], color=[];
+for(let i=0;i<N;i++){
+  phase.push(Math.random()*Math.PI*2);
+  position.push(new THREE.Vector3((Math.random()-0.5)*4,(Math.random()-0.5)*4,(Math.random()-0.5)*4));
+  velocity.push(new THREE.Vector3(0,0,0));
+  color.push(new THREE.Color(0x7FB2FF));
+}
+
+const pGeo = new THREE.BufferGeometry();
+const posAttr = new Float32Array(N*3);
+const colAttr = new Float32Array(N*3);
+for(let i=0;i<N;i++){
+  posAttr[i*3]=position[i].x; posAttr[i*3+1]=position[i].y; posAttr[i*3+2]=position[i].z;
+  colAttr[i*3]=1; colAttr[i*3+1]=1; colAttr[i*3+2]=1;
+}
+pGeo.setAttribute("position", new THREE.BufferAttribute(posAttr,3));
+pGeo.setAttribute("color", new THREE.BufferAttribute(colAttr,3));
+const pMat = new THREE.PointsMaterial({
+  size:0.085, vertexColors:true, transparent:true, opacity:1.0,
+  sizeAttenuation:true, blending:THREE.AdditiveBlending, depthWrite:false
+});
+const points = new THREE.Points(pGeo, pMat);
+points.renderOrder = 1;
+scene.add(points);
+
+/* capa de resplandor: mismas posiciones/colores, puntos más grandes y tenues
+   detrás de los puntos nítidos — da sensación de forma sólida en vez de
+   "polvo" disperso, sin necesitar más partículas. */
+const glowGeo = new THREE.BufferGeometry();
+glowGeo.setAttribute("position", new THREE.BufferAttribute(posAttr,3));
+glowGeo.setAttribute("color", new THREE.BufferAttribute(colAttr,3));
+const glowMat = new THREE.PointsMaterial({
+  size:0.24, vertexColors:true, transparent:true, opacity:0.16,
+  sizeAttenuation:true, blending:THREE.AdditiveBlending, depthWrite:false
+});
+const glowPoints = new THREE.Points(glowGeo, glowMat);
+glowPoints.renderOrder = 0;
+scene.add(glowPoints);
+
+/* ----- anillos de referencia del globo (especial: escena 02) ----- */
+const globeRingGroup = new THREE.Group();
+scene.add(globeRingGroup);
+function makeRingLoop(plane){
+  const segs=64, pts=[];
+  for(let i=0;i<=segs;i++){
+    const a=(i/segs)*Math.PI*2;
+    if(plane==="xz") pts.push(new THREE.Vector3(Math.cos(a),0,Math.sin(a)));
+    else if(plane==="xy") pts.push(new THREE.Vector3(Math.cos(a),Math.sin(a),0));
+    else pts.push(new THREE.Vector3(0,Math.sin(a),Math.cos(a)));
+  }
+  const geo=new THREE.BufferGeometry().setFromPoints(pts);
+  const mat=new THREE.LineBasicMaterial({ color:0xCFE3F5, transparent:true, opacity:0 });
+  return new THREE.LineLoop(geo,mat);
+}
+const globeRings = [makeRingLoop("xz"), makeRingLoop("xy"), makeRingLoop("yz")];
+globeRings.forEach(r=>globeRingGroup.add(r));
+
+/* ----- links (especial: escena 06 — comunidad) ----- */
+const MAX_LINKS = 90;
+const linkGeo = new THREE.BufferGeometry();
+const linkPosAttr = new Float32Array(MAX_LINKS*2*3);
+linkGeo.setAttribute("position", new THREE.BufferAttribute(linkPosAttr,3));
+const linkMat = new THREE.LineBasicMaterial({ color:0xF2637B, transparent:true, opacity:0 });
+const linkLines = new THREE.LineSegments(linkGeo, linkMat);
+scene.add(linkLines);
+let linkPairs=[];
+function computeLinkPairs(){
+  linkPairs=[];
+  for(let k=0;k<MAX_LINKS;k++){ linkPairs.push([k, (k+37)%N]); }
+}
+computeLinkPairs();
+
+/* ----- ondas de impacto (especial: escena 04) ----- */
+const ripples=[];
+function spawnRipples(){
+  for(let k=0;k<3;k++){
+    const geo=new THREE.RingGeometry(0.01,0.03,48);
+    const mat=new THREE.MeshBasicMaterial({ color:0xF5D67A, transparent:true, opacity:0.55, side:THREE.DoubleSide });
+    const mesh=new THREE.Mesh(geo,mat);
+    mesh.rotation.x=Math.random()*Math.PI; mesh.rotation.y=Math.random()*Math.PI;
+    mesh.userData.t0 = performance.now()/1000 + k*0.12;
+    scene.add(mesh); ripples.push(mesh);
+  }
+}
+
+/* ---------------------------------------------------------------------- */
+/* PARÁMETROS DE LA GRAMÁTICA — animados hacia el objetivo de cada escena  */
+/* ---------------------------------------------------------------------- */
+let currentParts = SLIDES[0].parts;
+let currentPartArrays = [];
+let groupAngle = 0;
+const groupAngleSpeed = { cur:0.15, tgt:0.15 };
+const partPaletteCurrent = []; // THREE.Color[] por partícula, ya interpolado
+
+function preparePartArrays(parts){
+  const arrs = parts.map(p=>{
+    const localCount = Math.ceil(N/parts.length);
+    return { shapeArr:getShapeTarget(p.shape, localCount), palette:p.palette.map(c=>new THREE.Color(c)), offset:p.offset, scale:p.scale };
+  });
+  return arrs;
+}
+currentPartArrays = preparePartArrays(currentParts);
+const paletteTargetPerPart = currentParts.map(p=>p.palette.map(c=>new THREE.Color(c)));
+
+function applySlide(cfg, opts){
+  opts = opts || {};
+  const isTransition = opts.isTransition !== false;
+  currentParts = cfg.parts;
+  currentPartArrays = preparePartArrays(currentParts);
+  groupAngleSpeed.tgt = cfg.spinSpeed;
+  state.slideEnterT = state.clock.getElapsedTime();
+
+  if(isTransition){
+    const k = cfg.kick;
+    for(let i=0;i<N;i++){
+      const dir = position[i].lengthSq()>0.0001 ? position[i].clone().normalize() : new THREE.Vector3((Math.random()-0.5),(Math.random()-0.5),(Math.random()-0.5)).normalize();
+      velocity[i].add(dir.multiplyScalar(k*(0.5+Math.random()*0.7)));
+      velocity[i].add(new THREE.Vector3((Math.random()-0.5),(Math.random()-0.5),(Math.random()-0.5)).multiplyScalar(k*0.15));
+    }
+    frameState.angVelExtra.y += k*0.5*(Math.random()>0.5?1:-1);
+    frameState.angVelExtra.x += k*0.22*(Math.random()>0.5?1:-1);
+    if(cfg.special==="ripple") spawnRipples();
+    if(cfg.special==="links") computeLinkPairs();
+  }
+}
+
+/* ---------------------------------------------------------------------- */
+/* ANIMATION LOOP                                                          */
+/* ---------------------------------------------------------------------- */
+const STIFF = 6.2, DAMP = 5.4;
+
+function easeOutCubic(x){ return 1-Math.pow(1-x,3); }
+
+function tick(){
+  const t = state.clock.getElapsedTime();
+  const dt = Math.min(0.05, t-state.lastT || 0.016);
+  state.lastT = t;
+
+  groupAngleSpeed.cur += (groupAngleSpeed.tgt - groupAngleSpeed.cur) * Math.min(1, 1.6*dt);
+  groupAngle += groupAngleSpeed.cur*dt;
+
+  // ---- marco (wireframe) — rotación constante, la estructura que no cambia ----
+  frameGroup.rotation.y += 0.12*dt + frameState.angVelExtra.y*dt;
+  frameGroup.rotation.x += 0.05*dt + frameState.angVelExtra.x*dt;
+  frameState.angVelExtra.multiplyScalar(Math.max(0,1-3.0*dt));
+  const cfgNow = SLIDES[state.index];
+  const edgeTarget = new THREE.Color(cfgNow.parts[0].palette[0]).lerp(new THREE.Color(0xffffff),0.3);
+  frameState.colorCurrent.lerp(edgeTarget, Math.min(1,2*dt));
+  edgesMat.color.copy(frameState.colorCurrent);
+  fillMat.color.copy(frameState.colorCurrent);
+
+  // ---- crecimiento animado (escena 06: "el talento crece...") ----
+  let growScale = null;
+  if(cfgNow.growWhileActive){
+    const g = cfgNow.growWhileActive;
+    const prog = Math.min(1, (t-state.slideEnterT)/g.duration);
+    growScale = g.from + (g.to-g.from)*easeOutCubic(prog);
+  }
+
+  // ---- partículas ----
+  const posArr = pGeo.attributes.position.array;
+  const colArr = pGeo.attributes.color.array;
+  const nParts = currentPartArrays.length;
+  for(let i=0;i<N;i++){
+    const partIndex = i % nParts;
+    const localIndex = Math.floor(i/nParts);
+    const part = currentPartArrays[partIndex];
+    const shapeArr = part.shapeArr;
+    const localPoint = shapeArr[localIndex % shapeArr.length];
+    const effScale = growScale!==null ? growScale : part.scale;
+
+    const scaled = localPoint.clone().multiplyScalar(effScale);
+    const rotated = scaled.applyAxisAngle(YAXIS, groupAngle);
+    const target = rotated.add(part.offset);
+    target.x += Math.sin(t*0.8+phase[i])*0.014;
+    target.y += Math.cos(t*0.7+phase[i]*1.3)*0.014;
+    target.z += Math.sin(t*0.65+phase[i]*0.6)*0.008;
+
+    const force = target.sub(position[i]).multiplyScalar(STIFF);
+    velocity[i].add(force.multiplyScalar(dt));
+    velocity[i].multiplyScalar(Math.max(0,1-DAMP*dt));
+    position[i].add(velocity[i].clone().multiplyScalar(dt));
+
+    posArr[i*3]=position[i].x; posArr[i*3+1]=position[i].y; posArr[i*3+2]=position[i].z;
+
+    const pal = part.palette;
+    const targetColor = pal[localIndex % pal.length];
+    color[i].lerp(targetColor, Math.min(1,2.6*dt));
+    colArr[i*3]=color[i].r; colArr[i*3+1]=color[i].g; colArr[i*3+2]=color[i].b;
+  }
+  pGeo.attributes.position.needsUpdate=true;
+  pGeo.attributes.color.needsUpdate=true;
+  glowGeo.attributes.position.needsUpdate=true;
+  glowGeo.attributes.color.needsUpdate=true;
+
+  // ---- anillos del globo (escena 02) ----
+  const globePart = cfgNow.parts.find(p=>p.shape==="globe");
+  const ringTargetOpacity = globePart ? 0.4 : 0;
+  globeRingGroup.rotation.y = groupAngle;
+  if(globePart){
+    const r = 1.15*(growScale!==null?growScale:globePart.scale);
+    globeRingGroup.scale.set(r,r,r);
+    globeRingGroup.position.copy(globePart.offset);
+  }
+  globeRings.forEach(ring=>{
+    ring.material.opacity += (ringTargetOpacity-ring.material.opacity)*Math.min(1,3*dt);
+    ring.material.color.copy(frameState.colorCurrent);
+  });
+
+  // ---- links overlay ----
+  const linksActive = cfgNow.special==="links";
+  linkMat.opacity += ((linksActive?0.4:0) - linkMat.opacity)*Math.min(1,3*dt);
+  linkMat.color.copy(new THREE.Color(cfgNow.parts[0].palette[0]));
+  if(linkMat.opacity>0.01){
+    const lp = linkGeo.attributes.position.array;
+    for(let k=0;k<MAX_LINKS;k++){
+      const [a,b]=linkPairs[k];
+      lp[k*6]=position[a].x; lp[k*6+1]=position[a].y; lp[k*6+2]=position[a].z;
+      lp[k*6+3]=position[b].x; lp[k*6+4]=position[b].y; lp[k*6+5]=position[b].z;
+    }
+    linkGeo.attributes.position.needsUpdate=true;
+  }
+
+  // ---- ripples ----
+  const now = performance.now()/1000;
+  for(let i=ripples.length-1;i>=0;i--){
+    const r=ripples[i]; const life=now-r.userData.t0;
+    if(life<0) continue;
+    const p=Math.min(1, life/1.1); const s=0.05+p*4.2;
+    r.scale.set(s,s,s); r.material.opacity=0.55*(1-p);
+    if(p>=1){ scene.remove(r); r.geometry.dispose(); r.material.dispose(); ripples.splice(i,1); }
+  }
+
+  // ---- cámara: deriva sutil ----
+  camera.position.x = Math.sin(t*0.08)*0.35;
+  camera.position.y = Math.cos(t*0.07)*0.22;
+  camera.lookAt(0,0,0);
+
+  renderer.render(scene,camera);
+  requestAnimationFrame(tick);
+}
+
+/* ---------------------------------------------------------------------- */
+/* UI WIRING                                                               */
+/* ---------------------------------------------------------------------- */
+const els = {
+  title:document.getElementById("slide-title"), sub:document.getElementById("slide-sub"),
+  eyebrow:document.getElementById("eyebrow-text"), textBlock:document.getElementById("text-block"),
+  counterCur:document.getElementById("counter-current"), counterTot:document.getElementById("counter-total"),
+  progressFill:document.getElementById("progress-fill"), hint:document.getElementById("hint"),
+  helpModal:document.getElementById("help-modal"), helpList:document.getElementById("help-list"),
+  btnEs:document.getElementById("btn-es"), btnPt:document.getElementById("btn-pt"),
+  bgPhoto:document.getElementById("bg-photo"), photoCaption:document.getElementById("photo-caption"),
+  catPill:document.getElementById("cat-pill")
+};
+els.counterTot.textContent = String(SLIDES.length).padStart(2,"0");
+
+function renderHelp(){
+  const T = UI_TEXT[state.lang];
+  document.getElementById("help-title").textContent = T.helpTitle;
+  document.querySelector("#help-card p.desc").textContent = T.helpDesc;
+  document.getElementById("help-close").textContent = T.helpClose;
+  els.helpList.innerHTML = "";
+  T.controls.forEach(([key,desc])=>{
+    const row=document.createElement("div"); row.className="help-row";
+    row.innerHTML = "<span>"+desc+"</span><kbd>"+key+"</kbd>";
+    els.helpList.appendChild(row);
+  });
+}
+
+function renderSlide(withTransitionFx){
+  const cfg = SLIDES[state.index];
+  const T = UI_TEXT[state.lang];
+  const L = cfg[state.lang];
+
+  els.textBlock.classList.add("fade-out");
+  setTimeout(()=>{
+    els.eyebrow.textContent = L.eyebrow;
+    els.title.textContent = L.title;
+    els.sub.textContent = L.sub || "";
+    els.sub.style.display = L.sub ? "block":"none";
+    if(cfg.category && CAT_LABEL[cfg.category]){
+      els.catPill.style.display="inline-block";
+      els.catPill.textContent = CAT_LABEL[cfg.category][state.lang];
+    } else { els.catPill.style.display="none"; }
+    els.textBlock.classList.remove("fade-out");
+  }, 180);
+
+  els.counterCur.textContent = String(state.index+1).padStart(2,"0");
+  els.progressFill.style.width = ((state.index+1)/SLIDES.length*100).toFixed(1)+"%";
+  const p0 = cfg.parts[0].palette;
+  els.progressFill.style.background = "linear-gradient(90deg, "+p0[0]+", "+(p0[1]||p0[0])+")";
+  document.documentElement.style.setProperty("--accent-1", p0[0]);
+  document.documentElement.style.setProperty("--accent-2", p0[1]||p0[0]);
+  document.documentElement.style.setProperty("--accent-3", p0[2]||p0[0]);
+
+  if(cfg.image){
+    const testImg = new Image();
+    testImg.onload = ()=>{ els.bgPhoto.src = "assets/"+cfg.image.file; els.bgPhoto.classList.add("visible"); };
+    testImg.onerror = ()=>{ els.bgPhoto.classList.remove("visible"); };
+    testImg.src = "assets/"+cfg.image.file;
+    els.photoCaption.textContent = state.lang==="es" ? cfg.image.tagEs : cfg.image.tagPt;
+    els.photoCaption.classList.add("visible");
+  } else {
+    els.bgPhoto.classList.remove("visible");
+    els.photoCaption.classList.remove("visible");
+  }
+
+  els.hint.textContent = T.hint;
+  document.getElementById("brand").querySelector("strong").textContent = T.brandTitle;
+  document.getElementById("brand").querySelector("span").textContent = T.brandSub;
+  renderHelp();
+
+  applySlide(cfg, { isTransition: withTransitionFx });
+}
+
+function goTo(i, withFx){
+  if(withFx===undefined) withFx=true;
+  state.index = Math.max(0, Math.min(SLIDES.length-1, i));
+  renderSlide(withFx);
+}
+function next(){ if(state.index<SLIDES.length-1) goTo(state.index+1); }
+function prev(){ if(state.index>0) goTo(state.index-1); }
+function restart(){ goTo(0); }
+
+function setLang(l){
+  state.lang=l;
+  document.documentElement.lang=l; document.documentElement.dataset.lang=l;
+  els.btnEs.classList.toggle("active", l==="es"); els.btnEs.setAttribute("aria-pressed", l==="es");
+  els.btnPt.classList.toggle("active", l==="pt"); els.btnPt.setAttribute("aria-pressed", l==="pt");
+  renderSlide(false);
+}
+
+function toggleHelp(force){
+  state.helpOpen = force!==undefined? force : !state.helpOpen;
+  els.helpModal.classList.toggle("open", state.helpOpen);
+}
+function toggleFullscreen(){
+  if(!document.fullscreenElement){ document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); }
+  else{ document.exitFullscreen && document.exitFullscreen(); }
+}
+
+document.getElementById("btn-next").addEventListener("click", next);
+document.getElementById("btn-prev").addEventListener("click", prev);
+document.getElementById("btn-restart").addEventListener("click", restart);
+document.getElementById("btn-help").addEventListener("click", ()=>toggleHelp());
+document.getElementById("btn-fullscreen").addEventListener("click", toggleFullscreen);
+document.getElementById("help-close").addEventListener("click", ()=>toggleHelp(false));
+els.helpModal.addEventListener("click", (e)=>{ if(e.target===els.helpModal) toggleHelp(false); });
+els.btnEs.addEventListener("click", ()=>setLang("es"));
+els.btnPt.addEventListener("click", ()=>setLang("pt"));
+
+window.addEventListener("keydown", (e)=>{
+  if(e.repeat) return;
+  switch(e.key){
+    case " ": case "ArrowRight": e.preventDefault(); next(); break;
+    case "ArrowLeft": prev(); break;
+    case "f": case "F": toggleFullscreen(); break;
+    case "h": case "H": case "?": toggleHelp(); break;
+    case "r": case "R": restart(); break;
+    case "Escape": if(state.helpOpen) toggleHelp(false); break;
+  }
+});
+
+let touchX=null;
+window.addEventListener("touchstart", e=>{ touchX=e.touches[0].clientX; }, {passive:true});
+window.addEventListener("touchend", e=>{
+  if(touchX===null) return;
+  const dx = e.changedTouches[0].clientX - touchX;
+  if(Math.abs(dx)>50){ dx<0 ? next() : prev(); }
+  touchX=null;
+}, {passive:true});
+
+/* ---------------------------------------------------------------------- */
+/* INIT                                                                     */
+/* ---------------------------------------------------------------------- */
+renderSlide(false);
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
