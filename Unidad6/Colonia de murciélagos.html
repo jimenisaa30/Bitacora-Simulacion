@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Colonia de murciélagos</title>
+<style>
+:root{--ink:#f6e8ff;--panel:rgba(18,4,32,.66);--edge:rgba(255,150,215,.35);--hot:#ff4d94;--cool:#a974ff;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html,body{height:100%;margin:0;background:#0a0014;color:var(--ink);font:13px/1.45 Georgia,"Times New Roman",serif;overflow:hidden}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+#bg{z-index:0}#gl{z-index:1}
+#ui{position:fixed;z-index:3;left:12px;top:calc(12px + env(safe-area-inset-top,0px));width:min(280px,calc(100vw - 24px));max-height:calc(100vh - 24px - env(safe-area-inset-top,0px));overflow-y:auto;padding:14px 16px;background:var(--panel);border:1px solid var(--edge);border-radius:10px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+h1{font-size:17px;font-weight:normal;font-style:italic;margin:0 0 10px}
+label{display:block;margin:8px 0}
+label span{display:flex;justify-content:space-between}
+output{color:var(--cool)}
+input[type=range]{width:100%;accent-color:var(--hot);margin:4px 0 0}
+.row{display:flex;gap:8px;margin-top:12px}
+button{flex:1;font:inherit;color:var(--ink);background:rgba(255,77,148,.14);border:1px solid var(--edge);border-radius:6px;padding:7px 4px;cursor:pointer}
+button:hover{background:rgba(255,77,148,.3)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--cool);outline-offset:2px}
+p{margin:12px 0 0;font-size:12px;opacity:.78}
+kbd{font:inherit;font-weight:bold;color:var(--hot)}
+#cur{position:fixed;z-index:2;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;border:2px solid;pointer-events:none;opacity:0;transition:opacity .2s,border-color .2s}
+#cur.a{border-color:#7be0ff}#cur.r{border-color:#ff5a5a}#cur.on{opacity:.8}
+#toast{position:fixed;z-index:4;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);padding:7px 14px;border-radius:20px;background:var(--panel);border:1px solid var(--edge);opacity:0;pointer-events:none;transition:opacity .25s;white-space:nowrap}
+#toast.on{opacity:1}
+body.hidden #ui,body.hidden #cur{display:none}
+body.hidden,body.hidden *{cursor:none}
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<canvas id="gl"></canvas>
+<div id="cur"></div>
+<div id="toast"></div>
+<div id="ui">
+  <h1>Colonia de murciélagos</h1>
+  <label><span>Velocidad del color <output id="oC"></output></span><input id="color" type="range" min="0" max="2" step="0.01" value="0.4"></label>
+  <label><span>Tamaño de las curvas <output id="oS"></output></span><input id="size" type="range" min="80" max="700" step="1" value="320"></label>
+  <label><span>Cantidad de curvas <output id="oN"></output></span><input id="curves" type="range" min="100" max="2000" step="10" value="750"></label>
+  <label><span>Dirección de las curvas <output id="oD"></output></span><input id="dir" type="range" min="0" max="360" step="1" value="0"></label>
+  <label><span>Cantidad de murciélagos <output id="oB"></output></span><input id="bats" type="range" min="5" max="150" step="1" value="50"></label>
+  <label><span>Tamaño del icosaedro <output id="oP"></output></span><input id="poly" type="range" min="2.5" max="8" step="0.1" value="5"></label>
+  <div class="row"><button id="bMode"></button><button id="bV"></button></div>
+  <div class="row"><button id="bC">Fondo (C)</button><button id="bM">Murciélagos (M)</button></div>
+  <div class="row"><button id="b1">Dirección (1)</button><button id="bH">Ocultar (H)</button></div>
+  <p><kbd>A</kbd> atrae o repele. <kbd>V</kbd> acelera el giro. <kbd>C</kbd> cambia el fondo. <kbd>M</kbd> cambia los murciélagos. <kbd>1</kbd> gira la dirección. <kbd>H</kbd> oculta o muestra la interfaz. <kbd>←</kbd><kbd>→</kbd> velocidad del color. <kbd>↑</kbd><kbd>↓</kbd> tamaño de curvas.</p>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+var TAU=Math.PI*2, $=function(i){return document.getElementById(i)};
+var st={color:.4,size:320,attract:true,rot:.5,bats:50,poly:5,curves:750,dir:0,bgA:0,bgB:2,bgQ:[],bc:0,batQ:[],hidden:false};
+var ROT_MIN=.5,ROT_STEP=.5,ROT_MAX=3;
+var cur=$('cur');
+
+/* ---------- UI y teclado ---------- */
+function syncUI(){
+  $('oC').textContent=st.color.toFixed(2);
+  $('oS').textContent=Math.round(st.size)+' px';
+  $('color').value=st.color; $('size').value=st.size;
+  $('bMode').textContent='Mouse: '+(st.attract?'atrae':'repele');
+  $('oN').textContent=st.curves;$('oD').textContent=st.dir+'°';$('oB').textContent=st.bats;$('oP').textContent=st.poly.toFixed(1);
+  $('curves').value=st.curves;$('dir').value=st.dir;$('bats').value=st.bats;$('poly').value=st.poly;
+  $('bH').textContent=st.hidden?'Mostrar (H)':'Ocultar (H)';
+  $('bV').textContent='Giro: '+st.rot.toFixed(1)+' rad/s';
+  cur.className=(st.attract?'a':'r')+(cur.classList.contains('on')?' on':'');
+}
+function toggleMode(){st.attract=!st.attract;syncUI()}
+function bumpRot(){st.rot+=ROT_STEP;if(st.rot>ROT_MAX+1e-6)st.rot=ROT_MIN;syncUI()}
+$('color').addEventListener('input',function(e){st.color=+e.target.value;syncUI()});
+$('size').addEventListener('input',function(e){st.size=+e.target.value;syncUI()});
+$('bMode').addEventListener('click',toggleMode);
+$('bV').addEventListener('click',bumpRot);
+$('curves').addEventListener('input',function(e){setCurves(+e.target.value)});
+$('dir').addEventListener('input',function(e){st.dir=+e.target.value;syncUI()});
+$('bats').addEventListener('input',function(e){setBats(+e.target.value)});
+$('poly').addEventListener('input',function(e){setPoly(+e.target.value)});
+$('bC').addEventListener('click',function(){nextBg()});
+$('bM').addEventListener('click',function(){nextBat()});
+$('b1').addEventListener('click',function(){turnDir()});
+$('bH').addEventListener('click',function(){toggleUI()});
+addEventListener('keydown',function(e){
+  var k=e.key.toLowerCase(), inInput=e.target.tagName==='INPUT';
+  if(e.ctrlKey||e.metaKey||e.altKey)return;
+  if(k==='a'){toggleMode()}
+  else if(k==='c'){nextBg()}
+  else if(k==='m'){nextBat()}
+  else if(k==='1'){turnDir()}
+  else if(k==='h'){toggleUI()}
+  else if(k==='v'){bumpRot()}
+  else if(!inInput&&k==='arrowright'){st.color=Math.min(2,st.color+.1);syncUI();e.preventDefault()}
+  else if(!inInput&&k==='arrowleft'){st.color=Math.max(0,st.color-.1);syncUI();e.preventDefault()}
+  else if(!inInput&&k==='arrowup'){st.size=Math.min(700,st.size+30);syncUI();e.preventDefault()}
+  else if(!inInput&&k==='arrowdown'){st.size=Math.max(80,st.size-30);syncUI();e.preventDefault()}
+});
+
+/* ---------- Fondo: flow field ---------- */
+var bg=$('bg'),bx=bg.getContext('2d'),W=1,H=1,tt=0,hp=0;
+function hs(x,y){var n=(Math.imul(x,374761393)+Math.imul(y,668265263))|0;n=Math.imul(n^(n>>>13),1274126177);return((n^(n>>>16))>>>0)/4294967295}
+function vn(x,y){
+  var xi=Math.floor(x),yi=Math.floor(y),fx=x-xi,fy=y-yi,u=fx*fx*(3-2*fx),v=fy*fy*(3-2*fy);
+  var a=hs(xi,yi),b=hs(xi+1,yi),c=hs(xi,yi+1),d=hs(xi+1,yi+1);
+  return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v;
+}
+function field(x,y){
+  var s=1/st.size;
+  return(vn(x*s+tt*.03,y*s)*.7+vn(x*s*2.1+7,y*s*2.1+tt*.02)*.3)*TAU*2+st.dir*Math.PI/180;
+}
+var P=[];
+function reset(p){p.x=Math.random()*W;p.y=Math.random()*H;p.life=80+Math.random()*220;p.d=(Math.random()-.5)*30;p.l=42+Math.random()*22}
+for(var i=0;i<750;i++){var p={};reset(p);P.push(p)}
+function drawBg(dt){
+  tt+=dt;hp+=st.color*dt;
+  bx.fillStyle='rgba(10,0,20,.07)';bx.fillRect(0,0,W,H);
+  var m=(Math.sin(hp)+1)/2,ca=COL[st.bgA].bg,cb=COL[st.bgB].bg,R=ca[0]+(cb[0]-ca[0])*m,G=ca[1]+(cb[1]-ca[1])*m,B=ca[2]+(cb[2]-ca[2])*m;
+  bx.lineWidth=1.4;
+  for(var i=0;i<P.length;i++){
+    var p=P[i],a=field(p.x,p.y),ox=p.x,oy=p.y;
+    p.x+=Math.cos(a)*2.2;p.y+=Math.sin(a)*2.2;p.life--;
+    var f=p.l/53;bx.strokeStyle='rgba('+Math.min(255,R*f|0)+','+Math.min(255,G*f|0)+','+Math.min(255,B*f|0)+',.55)';
+    bx.beginPath();bx.moveTo(ox,oy);bx.lineTo(p.x,p.y);bx.stroke();
+    if(p.life<=0||p.x<0||p.y<0||p.x>W||p.y>H)reset(p);
+  }
+}
+
+/* ---------- Escena 3D ---------- */
+var V3=THREE.Vector3;
+var renderer=new THREE.WebGLRenderer({canvas:$('gl'),alpha:true,antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
+renderer.setClearColor(0x000000,0);
+var scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(50,1,.1,100);
+
+var geo=new THREE.IcosahedronGeometry(5,0);
+var poly=new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:0xffc2ee,transparent:true,opacity:.95}));
+scene.add(poly);
+
+/* normales de las 20 caras y radio interior */
+var normals=[],wn=[],INR=1e9,pa=geo.attributes.position;
+for(var f=0;f<pa.count;f+=3){
+  var a=new V3().fromBufferAttribute(pa,f),b=new V3().fromBufferAttribute(pa,f+1),c=new V3().fromBufferAttribute(pa,f+2);
+  var n=b.clone().sub(a).cross(c.clone().sub(a)).normalize();
+  if(n.dot(a)<0)n.negate();
+  INR=Math.min(INR,n.dot(a));normals.push(n);wn.push(new V3());
+}
+
+/* murciélago: cuerpo + dos alas con aleteo */
+var bm=new THREE.MeshBasicMaterial({color:0x7a35b8,side:THREE.DoubleSide});
+var bodyG=new THREE.ConeGeometry(.13,.55,6);bodyG.rotateX(Math.PI/2);
+var wv=[[0,0,.3],[0,0,-.3],[1,0,.15],[.6,0,-.25],[.55,0,.2]],wi=[0,1,3, 0,3,4, 4,3,2],wa=[];
+wi.forEach(function(k){wa.push(wv[k][0],wv[k][1],wv[k][2])});
+var wingG=new THREE.BufferGeometry();wingG.setAttribute('position',new THREE.Float32BufferAttribute(wa,3));
+function makeBat(){
+  var g=new THREE.Group(),mat=bm.clone(),body=new THREE.Mesh(bodyG,mat);if(st.bc)mat.color.setHex(COL[st.bc].bat);
+  var pr=new THREE.Group(),pl=new THREE.Group(),wr=new THREE.Mesh(wingG,mat),wl=new THREE.Mesh(wingG,mat);
+  wl.scale.x=-1;pr.add(wr);pl.add(wl);g.add(body,pr,pl);g.scale.setScalar(.5);scene.add(g);
+  var p=new V3(Math.random()-.5,Math.random()-.5,Math.random()-.5).multiplyScalar(st.poly);
+  var v=new V3(Math.random()-.5,Math.random()-.5,Math.random()-.5).normalize().multiplyScalar(2.5);
+  return{g:g,mat:mat,pr:pr,pl:pl,p:p,v:v,ph:Math.random()*TAU};
+}
+var bats=[];for(var i=0;i<st.bats;i++)bats.push(makeBat());
+
+/* mouse en el plano z=0 */
+var ray=new THREE.Raycaster(),plane=new THREE.Plane(new V3(0,0,1),0),ndc=new THREE.Vector2(),mw=new V3(),mOn=false;
+addEventListener('pointermove',function(e){
+  ndc.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);
+  cur.style.left=e.clientX+'px';cur.style.top=e.clientY+'px';cur.classList.add('on');mOn=true;
+});
+document.addEventListener('pointerleave',function(){mOn=false;cur.classList.remove('on')});
+
+var acc=new V3(),sep=new V3(),ali=new V3(),coh=new V3(),tmp=new V3();
+function step(dt){
+  poly.rotation.y+=st.rot*dt;poly.rotation.x+=st.rot*.4*dt;poly.updateMatrixWorld();
+  for(var i=0;i<20;i++)wn[i].copy(normals[i]).applyQuaternion(poly.quaternion);
+  if(mOn){ray.setFromCamera(ndc,cam);if(!ray.ray.intersectPlane(plane,mw))mOn=false}
+  var inr=INR*poly.scale.x,lim=inr-.55;
+  for(var i=0;i<bats.length;i++){
+    var b=bats[i],nA=0;
+    acc.set(0,0,0);sep.set(0,0,0);ali.set(0,0,0);coh.set(0,0,0);
+    for(var j=0;j<bats.length;j++){
+      if(i===j)continue;var o=bats[j];
+      tmp.subVectors(b.p,o.p);var d=tmp.length();
+      if(d<3.2){ali.add(o.v);coh.add(o.p);nA++;if(d<1.2&&d>.001)sep.addScaledVector(tmp,1/(d*d))}
+    }
+    if(nA){
+      ali.divideScalar(nA).sub(b.v).multiplyScalar(.9);
+      coh.divideScalar(nA).sub(b.p).multiplyScalar(.5);
+      acc.add(ali).add(coh).addScaledVector(sep,1.8);
+    }
+    acc.addScaledVector(b.p,-.12);
+    if(mOn){
+      tmp.subVectors(b.p,mw);var md=tmp.length();
+      if(md<4&&md>.001){var s=(1-md/4)*30/md;acc.addScaledVector(tmp,st.attract?-s:s)}
+    }
+    for(var k=0;k<20;k++){
+      var dist=b.p.dot(wn[k]);
+      if(dist>lim)acc.addScaledVector(wn[k],-(dist-lim)*25);
+    }
+    b.v.addScaledVector(acc,dt);
+    var sp=b.v.length();
+    if(sp>4.2)b.v.multiplyScalar(4.2/sp);else if(sp<1.8)b.v.multiplyScalar(1.8/Math.max(sp,.01));
+    b.p.addScaledVector(b.v,dt);
+    for(var k=0;k<20;k++){  /* límite duro dentro de las caras */
+      var dd=b.p.dot(wn[k]),hard=inr-.3;
+      if(dd>hard){b.p.addScaledVector(wn[k],-(dd-hard));var vn_=b.v.dot(wn[k]);if(vn_>0)b.v.addScaledVector(wn[k],-1.6*vn_)}
+    }
+    b.g.position.copy(b.p);
+    b.g.lookAt(tmp.copy(b.p).add(b.v));
+    b.ph+=dt*(8+b.v.length()*1.3);
+    var w=Math.sin(b.ph)*.85;b.pr.rotation.z=w;b.pl.rotation.z=-w;
+  }
+}
+
+/* ---------- Nuevos controles ---------- */
+/* paleta permitida: morado, vino tinto, rojo, gris y negro */
+var COL=[{n:'morado',bg:[136,46,214],bat:0x7a35b8},{n:'vino tinto',bg:[122,16,46],bat:0x8a1636},{n:'rojo',bg:[232,32,44],bat:0xe0242f},{n:'gris',bg:[150,150,160],bat:0x9b9ba6},{n:'negro',bg:[30,30,36],bat:0x17171c}];
+/* orden de aparición al azar: se baraja la lista y se reparte sin repetir hasta agotarla */
+function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.random()*(i+1)|0,t=a[i];a[i]=a[j];a[j]=t}return a}
+function deal(q,last){if(!q.length){do{q.length=0;for(var i=0;i<COL.length;i++)q.push(i);shuffle(q)}while(q[q.length-1]===last)}return q.pop()}
+
+function toast(t){var el=$('toast');el.textContent=t;el.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(function(){el.classList.remove('on')},1800)}
+function warmBg(){bx.fillStyle='#0a0014';bx.fillRect(0,0,W,H);for(var i=0;i<70;i++)drawBg(0)}
+function nextBg(){st.bgA=st.bgB;st.bgB=deal(st.bgQ,st.bgB);warmBg();toast('Fondo: '+COL[st.bgA].n+' y '+COL[st.bgB].n)}
+function nextBat(){st.bc=deal(st.batQ,st.bc);bats.forEach(function(b){b.mat.color.setHex(COL[st.bc].bat)});toast('Murciélagos: '+COL[st.bc].n)}
+function turnDir(){st.dir=(st.dir+45)%360;syncUI();toast('Dirección: '+st.dir+'°')}
+function setCurves(n){st.curves=n;while(P.length<n){var p={};reset(p);P.push(p)}if(P.length>n)P.length=n;syncUI()}
+function setBats(n){st.bats=n;while(bats.length<n)bats.push(makeBat());while(bats.length>n)scene.remove(bats.pop().g);syncUI()}
+function fitCam(){cam.position.z=Math.max(15,st.poly*3,1.3*st.poly/(Math.tan(25*Math.PI/180)*cam.aspect))}
+function setPoly(r){st.poly=r;poly.scale.setScalar(r/5);fitCam();syncUI()}
+function toggleUI(){st.hidden=!st.hidden;document.body.classList.toggle('hidden',st.hidden);syncUI();toast(st.hidden?'Interfaz oculta. Presiona H para mostrarla':'Interfaz visible')}
+
+/* ---------- Tamaño y bucle ---------- */
+function resize(){
+  W=innerWidth;H=innerHeight;bg.width=W;bg.height=H;
+  bx.fillStyle='#0a0014';bx.fillRect(0,0,W,H);
+  renderer.setSize(W,H,false);cam.aspect=W/H;
+  fitCam();
+  cam.updateProjectionMatrix();
+}
+addEventListener('resize',resize);resize();syncUI();
+var last=performance.now();
+function loop(now){
+  var dt=Math.min(.05,(now-last)/1000);last=now;
+  drawBg(dt);step(dt);renderer.render(scene,cam);
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
